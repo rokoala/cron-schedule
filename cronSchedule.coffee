@@ -178,6 +178,101 @@ app.directive simpleCronSchedule, ['$compile', ($compile) ->
             return
         
         return
-    
+        
+    sScheduleLink = (scope, element, attrs, controller) ->
+        scope.schedule = controller.cronDefaultCustomValue
+        
+        scope.scheduleType = "custom"
+        
+        scope.hourminuteRange =
+            value:controller.range.minuteincrement
+            type:controller.hourminute.types
+            subValue1:controller.range.minute
+            subValue2:controller.range.second
+        
+        scope.weekRange = 
+            value:controller.range.dayofweek
+            subValue1:controller.range.hour
+            subValue2:controller.range.minute
+        
+        scope.cron = 
+            custom:
+                disabled:false
+                value:controller.cronDefaultCustomValue
+            hourminute:
+                disabled:true,
+                value:1,
+                type:controller.hourminute.types[0],
+                subValue1:controller.range.minute[0],
+                subValue2:controller.range.second[0]
+            week:
+                disabled:true,
+                value:[],
+                subValue1:controller.range.hour[0],
+                subValue2:controller.range.minute[0]
+        
+        if scope.initalValue?
+            controller.setInitialCron(scope.initialValue)
+            
+        scope.$watch 'cron.hourminute.type', (newValue,oldValue) ->
+            if(newValue isnt oldValue)
+                switch(newValue.value)
+                    when "minute"
+                        scope.hourminuteRange.value=controller.range.minuteincrement;
+                        scope.cron.hourminute.value=controller.range.minuteincrement[0];
+
+                        scope.hourminuteRange.subValue1=controller.range.minute;
+                        scope.cron.hourminute.subValue1=controller.range.minute[0];
+
+                        scope.hourminuteRange.subValue2=controller.range.second;
+                        scope.cron.hourminute.subValue2=controller.range.second[0];
+                        return
+                    when "hour"
+                        scope.hourminuteRange.value=controller.range.hourincrement;
+                        scope.cron.hourminute.value=controller.range.hourincrement[0];
+
+                        scope.hourminuteRange.subValue1=controller.range.hour;
+                        scope.cron.hourminute.subValue1=controller.range.hour[0];
+
+                        scope.hourminuteRange.subValue2=controller.range.minute;
+                        scope.cron.hourminute.subValue2=controller.range.minute[0];
+                        return
+                
+        scope.$watch 'cron.custom.value', (newValue,oldValue) ->
+            if(newValue isnt oldValue)
+                if(scope.scheduleType is scope.radioTypes["1"])
+                    do(controller.generateCustomCron)
+            return
+        
+        scope.$watchCollection '[cron.hourminute.type,cron.hourminute.value,cron.hourminute.subValue1,cron.hourminute.subValue2]',(newValues,oldValues) ->
+            if(scope.scheduleType is scope.radioTypes["2"])
+                controller.generateWeekCron()
+            return
+                    
+        scope.$watchCollection '[cron.week.value,cron.week.subValue1,cron.week.subValue2]',(newValues,oldValues) ->
+            if(scope.scheduleType is scope.radioTypes["3"])
+                controller.generateWeekCron()
+            return
+        
+        scope.$watch 'scheduleType', (newValue,oldValue) ->
+            
+            for type in scope.radioTypes
+                do(type)->
+                    scope.cron[scope.radioTypes[type]].disabled=true
+            
+            scope.cron[newValue].disabled=false
+            
+            if (newValue is scope.radioTypes["1"])
+                controller.generateCustomCron()
+            else if(newValue is scope.radioTypes["2"])
+                controller.generateHourminuteCron()
+            else if(newValue is scope.radioTypes["3"])
+                controller.generateWeekCron()
+        
+        if do(scope.scheduleEdit)?
+            do(scope.scheduleEdit).then( (schedule)->
+                controller.setInitialCron(schedule)
+            )
+        
     sSchedule
 ]

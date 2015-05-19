@@ -7,7 +7,7 @@
 
   app.directive(simpleCronSchedule, [
     '$compile', function($compile) {
-      var sSchedule, sScheduleController;
+      var sSchedule, sScheduleController, sScheduleLink;
       sSchedule = {
         restrict: 'AE',
         scope: {
@@ -200,6 +200,105 @@
             fn(regex);
           }
         };
+      };
+      sScheduleLink = function(scope, element, attrs, controller) {
+        scope.schedule = controller.cronDefaultCustomValue;
+        scope.scheduleType = "custom";
+        scope.hourminuteRange = {
+          value: controller.range.minuteincrement,
+          type: controller.hourminute.types,
+          subValue1: controller.range.minute,
+          subValue2: controller.range.second
+        };
+        scope.weekRange = {
+          value: controller.range.dayofweek,
+          subValue1: controller.range.hour,
+          subValue2: controller.range.minute
+        };
+        scope.cron = {
+          custom: {
+            disabled: false,
+            value: controller.cronDefaultCustomValue
+          },
+          hourminute: {
+            disabled: true,
+            value: 1,
+            type: controller.hourminute.types[0],
+            subValue1: controller.range.minute[0],
+            subValue2: controller.range.second[0]
+          },
+          week: {
+            disabled: true,
+            value: [],
+            subValue1: controller.range.hour[0],
+            subValue2: controller.range.minute[0]
+          }
+        };
+        if (scope.initalValue != null) {
+          controller.setInitialCron(scope.initialValue);
+        }
+        scope.$watch('cron.hourminute.type', function(newValue, oldValue) {
+          if (newValue !== oldValue) {
+            switch (newValue.value) {
+              case "minute":
+                scope.hourminuteRange.value = controller.range.minuteincrement;
+                scope.cron.hourminute.value = controller.range.minuteincrement[0];
+                scope.hourminuteRange.subValue1 = controller.range.minute;
+                scope.cron.hourminute.subValue1 = controller.range.minute[0];
+                scope.hourminuteRange.subValue2 = controller.range.second;
+                scope.cron.hourminute.subValue2 = controller.range.second[0];
+                break;
+              case "hour":
+                scope.hourminuteRange.value = controller.range.hourincrement;
+                scope.cron.hourminute.value = controller.range.hourincrement[0];
+                scope.hourminuteRange.subValue1 = controller.range.hour;
+                scope.cron.hourminute.subValue1 = controller.range.hour[0];
+                scope.hourminuteRange.subValue2 = controller.range.minute;
+                scope.cron.hourminute.subValue2 = controller.range.minute[0];
+            }
+          }
+        });
+        scope.$watch('cron.custom.value', function(newValue, oldValue) {
+          if (newValue !== oldValue) {
+            if (scope.scheduleType === scope.radioTypes["1"]) {
+              controller.generateCustomCron();
+            }
+          }
+        });
+        scope.$watchCollection('[cron.hourminute.type,cron.hourminute.value,cron.hourminute.subValue1,cron.hourminute.subValue2]', function(newValues, oldValues) {
+          if (scope.scheduleType === scope.radioTypes["2"]) {
+            controller.generateWeekCron();
+          }
+        });
+        scope.$watchCollection('[cron.week.value,cron.week.subValue1,cron.week.subValue2]', function(newValues, oldValues) {
+          if (scope.scheduleType === scope.radioTypes["3"]) {
+            controller.generateWeekCron();
+          }
+        });
+        scope.$watch('scheduleType', function(newValue, oldValue) {
+          var fn, j, len, ref, type;
+          ref = scope.radioTypes;
+          fn = function(type) {
+            return scope.cron[scope.radioTypes[type]].disabled = true;
+          };
+          for (j = 0, len = ref.length; j < len; j++) {
+            type = ref[j];
+            fn(type);
+          }
+          scope.cron[newValue].disabled = false;
+          if (newValue === scope.radioTypes["1"]) {
+            return controller.generateCustomCron();
+          } else if (newValue === scope.radioTypes["2"]) {
+            return controller.generateHourminuteCron();
+          } else if (newValue === scope.radioTypes["3"]) {
+            return controller.generateWeekCron();
+          }
+        });
+        if ((scope.scheduleEdit != null)()) {
+          return scope.scheduleEdit.then(function(schedule) {
+            return controller.setInitialCron(schedule);
+          })();
+        }
       };
       return sSchedule;
     }

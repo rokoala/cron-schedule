@@ -3,22 +3,12 @@
 app = angular.module 'CronSchedule',[]
  
     
-app.directive simpleCronSchedule, ['$compile', ($compile) ->
-                       
-    sSchedule =
-        restrict: 'AE'
-        scope:
-            schedule:'=schedule'
-            scheduleEdit:'&'
-            initialValue:'@'    
-        controller:sScheduleController
-        link:sScheduleLink
-        templateUrl:'simpleCronSchedule.html'
+app.directive "simpleCronSchedule", ['$compile', ($compile) ->
     
     sScheduleController = ($scope,$element,$attrs) ->
         aCron = ["0","0","0","0","0","0"]
-        cronDefaultCustomValue = aCron.join(" ")
-        
+        @.cronDefaultCustomValue = aCron.join(" ")
+            
         cronTypeRegex=
             hourminute_m:/^[0-9]{1,2}\s[0-9]{1,2}\/[0-9]{1,2}\s\*\s\*\s\*\s\*$/
             hourminute_h:/^[0]\s[0-9]{1,2}\s[0-9]{1,2}\/[0-9]{1,2}\s\*\s\*\s\*$/
@@ -26,12 +16,12 @@ app.directive simpleCronSchedule, ['$compile', ($compile) ->
         
         self = @
         
-        @.radioTypes=
+        $scope.radioTypes=
             1:"custom"
             2:"hourminute"
             3:"week"
             
-        range=
+        @.range=
             hour:[]
             hourincrement:[1,2,3,4,6,8,12,24]
             minute:[],
@@ -39,7 +29,7 @@ app.directive simpleCronSchedule, ['$compile', ($compile) ->
             second:[]
             dayofweek:["SUN","MON","TUE","WED","THU","FRI","SAT"]
         
-        @.dayofweekConvert=
+        $scope.dayofweekConvert=
             "SUN":"SUN"
             "MON":"MON"
             "TUE":"TUE"
@@ -48,7 +38,7 @@ app.directive simpleCronSchedule, ['$compile', ($compile) ->
             "FRI":"FRI"
             "SAT":"SAT"
         
-        hourminute=
+        @.hourminute=
             types:[
                 name:"minute(s)"
                 value:"minute",
@@ -59,63 +49,67 @@ app.directive simpleCronSchedule, ['$compile', ($compile) ->
         ### calculating hour, minute, second ranges ###
         for i in [0...60]
             if(i<24)
-                range.hour.push value:i,name:i+"h"
+                self.range.hour.push value:i,name:i+"h"
             
-            range.minute.push value:i,name:i+" min"
-            range.second.push value:i,name:i+" s"
+            self.range.minute.push value:i,name:i+" min"
+            self.range.second.push value:i,name:i+" s"
         
         
         
         ### creates base cron configuration * * * * * * ###
-        createBaseCtron = ->
+        createBaseCron = ->
             for i in [0..6]
                 aCron[i] = '*'
             return
         
         ### modify schedule module and generate final cron task string ###
         generateCron = ->
-            self.schedule = aCron.join(" ")
+            $scope.schedule = aCron.join(" ")
+            return
         
         ### Generate custom cron type - Gets custom value of custom value and generates cron task string ###
-        generateCustomCron = ->
-            auxCron = self.cron.custom.value.split(" ");
+        @.generateCustomCron = ->
+            auxCron = $scope.cron.custom.value.split(" ");
             
             if(auxCron.length <= 6) then aCron = auxCron;
             
-            cron.custom.value = do(generateCron)
+            $scope.cron.custom.value = do(generateCron)
+            return
         
         ### 
             Generate hourminute cron type
 			 - Create base configuration
 			 - Generates cron task string depending on type selected (hour(s)/minute(s))
         ### 
-        generateHourminuteCron = ->
+        @.generateHourminuteCron = ->
             do(createBaseCron)
-            if (self.cron.hourminute.type.value is "minute")
-                aCron[0] = self.cron.hourminute.subValue2.value
-                aCron[1] = self.cron.hourminute.subValue1.value +"/"+ self.cron.hourminute.value
-            else if (self.cron.hourminute.type.value is "hour")
+            if ($scope.cron.hourminute.type.value is "minute")
+                aCron[0] = $scope.cron.hourminute.subValue2.value
+                aCron[1] = $scope.cron.hourminute.subValue1.value+"/"+$scope.cron.hourminute.value
+            else if ($scope.cron.hourminute.type.value is "hour")
                 aCron[0] = "0";
-                aCron[1] = self.cron.hourminute.subValue2.value
-                aCron[2] = self.cron.hourminute.subValue1.value +"/"+ self.cron.hourminute.value
-            self.cron.custom.value = do(generateCron)
+                aCron[1] = $scope.cron.hourminute.subValue2.value
+                aCron[2] = $scope.cron.hourminute.subValue1.value+"/"+$scope.cron.hourminute.value
+            $scope.cron.custom.value = do(generateCron)
+            return
             
         ###
         Generate week cron type
 			 - Create base configuration
 			 - Parse days of week and generate cron task string
         ###
-        generateWeekCron = ->
+        @.generateWeekCron = ->
             do(createBaseCron)
             
             aCron[0] = "0"
-            aCron[1] = self.cron.week.subValue2.value
-            aCron[2] = self.cron.week.subValue1.value
-            aCron[5] = self.cron.week.value.join(",")
+            aCron[1] = $scope.cron.week.subValue2.value
+            aCron[2] = $scope.cron.week.subValue1.value
+            aCron[5] = $scope.cron.week.value.join(",")
             
             if(aCron[5] is "") then aCron[5] = "*"
             
-            self.cron.custom.value = do(generateCron)
+            $scope.cron.custom.value = do(generateCron)
+            return
         
         ###
             Update models that have information about the cron task based on cron type (hourminute_m, hourminute_h, week)
@@ -123,54 +117,54 @@ app.directive simpleCronSchedule, ['$compile', ($compile) ->
         ###
         updateModels = ->
             'hourminute_m': ->
-                self.scheduleType = self.radioTypes["2"]
-                self.cron.hourminute.type = self.hourminute.types[0]
+                $scope.scheduleType = $scope.radioTypes["2"]
+                $scope.cron.hourminute.type = self.hourminute.types[0]
                 
                 $timeout -> 
-                    self.hourminuteRange.value     = range.minuteincrement
-                    self.hourminuteRange.subValue1 = range.minute
-                    self.hourminuteRange.subValue2 = range.second
+                    $scope.hourminuteRange.value     = self.range.minuteincrement
+                    $scope.hourminuteRange.subValue1 = self.range.minute
+                    $scope.hourminuteRange.subValue2 = self.range.second
                     
-                    self.cron.hourminute.subValue2 = range.second[parseFloat(schedule[0],10)]
+                    $scope.cron.hourminute.subValue2 = self.range.second[parseFloat(schedule[0],10)]
                     subschedule = schedule[1].split("/")
                     
-                    self.cron.hourminute.subValue1 = range.minute[parseFloat(subschedule[0],10)]
-                    self.cron.hourminute.value = parseFloat(subschedule[1],10)
+                    $scope.cron.hourminute.subValue1 = self.range.minute[parseFloat(subschedule[0],10)]
+                    $scope.cron.hourminute.value = parseFloat(subschedule[1],10)
                     
                     $scope.$apply();
                 return
             
             'hourminute_h': ->
-                self.scheduleType = self.radioTypes["2"]
-                self.cron.hourminute.type = hourminute.types[1]
+                $scope.scheduleType = $scope.radioTypes["2"]
+                $scope.cron.hourminute.type = self.hourminute.types[1]
                 
                 $timeout ->
-                    self.hourminuteRange.value     = range.hourincrement
-                    self.hourminuteRange.subValue1 = range.hour
-                    self.hourminuteRange.subValue2 = range.minute
+                    $scope.hourminuteRange.value     = self.range.hourincrement
+                    $scope.hourminuteRange.subValue1 = self.range.hour
+                    $scope.hourminuteRange.subValue2 = self.range.minute
                     
-                    self.cron.hourminute.subValue2 = range.minute[parseFloat(schedule[1],10)]
+                    $scope.cron.hourminute.subValue2 = self.range.minute[parseFloat(schedule[1],10)]
                     subschedule = schedule[2].split("/")
                     
-                    self.cron.hourminute.subValue1 = range.hour[parseFloat(subschedule[0],10)]
-                    self.cron.hourminute.value     = parseFloat(subschedule[1],10)
+                    $scope.cron.hourminute.subValue1 = self.range.hour[parseFloat(subschedule[0],10)]
+                    $scope.cron.hourminute.value     = parseFloat(subschedule[1],10)
                     $scope.$apply()
                 return
             
             'week': (schedule)->
-                self.scheduleType = self.radioTypes[3]
+                $scope.scheduleType = $scope.radioTypes[3]
                 
-                self.cron.week.subValue2 = range.minute[parseFloat(schedule[1],10)]
-                self.cron.week.subValue1 = range.hour[parseFloat(schedule[2],10)]
+                $scope.cron.week.subValue2 = self.range.minute[parseFloat(schedule[1],10)]
+                $scope.cron.week.subValue1 = self.range.hour[parseFloat(schedule[2],10)]
                 
-                self.cron.week.value = schedule[5].split(",")
+                $scope.cron.week.value = schedule[5].split(",")
         
         ###
         Always update cron custom value and also populate the models
         ###
-        setInitialCron = (initialCron) ->
+        @.setInitialCron = (initialCron) ->
             
-            self.cron.custom.value = initialCron
+            $scope.cron.custom.value = initialCron
             for regex in cronTypeRegex
                 do(regex) ->
                     if(cronTypeRegex[regex].exec(initialCron))
@@ -255,24 +249,34 @@ app.directive simpleCronSchedule, ['$compile', ($compile) ->
             return
         
         scope.$watch 'scheduleType', (newValue,oldValue) ->
-            
-            for type in scope.radioTypes
-                do(type)->
-                    scope.cron[scope.radioTypes[type]].disabled=true
-            
-            scope.cron[newValue].disabled=false
-            
-            if (newValue is scope.radioTypes["1"])
-                controller.generateCustomCron()
-            else if(newValue is scope.radioTypes["2"])
-                controller.generateHourminuteCron()
-            else if(newValue is scope.radioTypes["3"])
-                controller.generateWeekCron()
+            if newValue isnt oldValue
+                for type in scope.radioTypes
+                    do(type)->
+                        scope.cron[scope.radioTypes[type]].disabled=true
+
+                scope.cron[newValue].disabled=false
+
+                if (newValue is scope.radioTypes["1"])
+                    controller.generateCustomCron()
+                else if(newValue is scope.radioTypes["2"])
+                    controller.generateHourminuteCron()
+                else if(newValue is scope.radioTypes["3"])
+                    controller.generateWeekCron()
         
-        if do(scope.scheduleEdit)?
+        if scope.scheduleEdit()
             do(scope.scheduleEdit).then( (schedule)->
                 controller.setInitialCron(schedule)
             )
-        
+
+    sSchedule =
+        restrict: 'AE'
+        scope:
+            schedule:'=schedule'
+            scheduleEdit:'&'
+            initialValue:'@'    
+        controller:sScheduleController
+        link:sScheduleLink
+        templateUrl:'simpleCronSchedule.html'    
+    
     sSchedule
 ]

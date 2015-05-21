@@ -5,36 +5,25 @@
 
   app = angular.module('CronSchedule', []);
 
-  app.directive(simpleCronSchedule, [
+  app.directive("simpleCronSchedule", [
     '$compile', function($compile) {
       var sSchedule, sScheduleController, sScheduleLink;
-      sSchedule = {
-        restrict: 'AE',
-        scope: {
-          schedule: '=schedule',
-          scheduleEdit: '&',
-          initialValue: '@'
-        },
-        controller: sScheduleController,
-        link: sScheduleLink,
-        templateUrl: 'simpleCronSchedule.html'
-      };
       sScheduleController = function($scope, $element, $attrs) {
-        var aCron, createBaseCtron, cronDefaultCustomValue, cronTypeRegex, generateCron, generateCustomCron, generateHourminuteCron, generateWeekCron, hourminute, i, j, range, self, setInitialCron, updateModels;
+        var aCron, createBaseCron, cronTypeRegex, generateCron, i, j, self, updateModels;
         aCron = ["0", "0", "0", "0", "0", "0"];
-        cronDefaultCustomValue = aCron.join(" ");
+        this.cronDefaultCustomValue = aCron.join(" ");
         cronTypeRegex = {
           hourminute_m: /^[0-9]{1,2}\s[0-9]{1,2}\/[0-9]{1,2}\s\*\s\*\s\*\s\*$/,
           hourminute_h: /^[0]\s[0-9]{1,2}\s[0-9]{1,2}\/[0-9]{1,2}\s\*\s\*\s\*$/,
           week: /0\s(\d{1,2})\s(\d{1,2})\s\*\s\*\s(.*)/
         };
         self = this;
-        this.radioTypes = {
+        $scope.radioTypes = {
           1: "custom",
           2: "hourminute",
           3: "week"
         };
-        range = {
+        this.range = {
           hour: [],
           hourincrement: [1, 2, 3, 4, 6, 8, 12, 24],
           minute: [],
@@ -42,7 +31,7 @@
           second: [],
           dayofweek: ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
         };
-        this.dayofweekConvert = {
+        $scope.dayofweekConvert = {
           "SUN": "SUN",
           "MON": "MON",
           "TUE": "TUE",
@@ -51,7 +40,7 @@
           "FRI": "FRI",
           "SAT": "SAT"
         };
-        hourminute = {
+        this.hourminute = {
           types: [
             {
               name: "minute(s)",
@@ -66,23 +55,23 @@
         /* calculating hour, minute, second ranges */
         for (i = j = 0; j < 60; i = ++j) {
           if (i < 24) {
-            range.hour.push({
+            self.range.hour.push({
               value: i,
               name: i + "h"
             });
           }
-          range.minute.push({
+          self.range.minute.push({
             value: i,
             name: i + " min"
           });
-          range.second.push({
+          self.range.second.push({
             value: i,
             name: i + " s"
           });
         }
 
         /* creates base cron configuration * * * * * * */
-        createBaseCtron = function() {
+        createBaseCron = function() {
           var k;
           for (i = k = 0; k <= 6; i = ++k) {
             aCron[i] = '*';
@@ -91,17 +80,17 @@
 
         /* modify schedule module and generate final cron task string */
         generateCron = function() {
-          return self.schedule = aCron.join(" ");
+          $scope.schedule = aCron.join(" ");
         };
 
         /* Generate custom cron type - Gets custom value of custom value and generates cron task string */
-        generateCustomCron = function() {
+        this.generateCustomCron = function() {
           var auxCron;
-          auxCron = self.cron.custom.value.split(" ");
+          auxCron = $scope.cron.custom.value.split(" ");
           if (auxCron.length <= 6) {
             aCron = auxCron;
           }
-          return cron.custom.value = generateCron();
+          $scope.cron.custom.value = generateCron();
         };
 
         /* 
@@ -109,17 +98,17 @@
         			 - Create base configuration
         			 - Generates cron task string depending on type selected (hour(s)/minute(s))
          */
-        generateHourminuteCron = function() {
+        this.generateHourminuteCron = function() {
           createBaseCron();
-          if (self.cron.hourminute.type.value === "minute") {
-            aCron[0] = self.cron.hourminute.subValue2.value;
-            aCron[1] = self.cron.hourminute.subValue1.value(+"/" + self.cron.hourminute.value);
-          } else if (self.cron.hourminute.type.value === "hour") {
+          if ($scope.cron.hourminute.type.value === "minute") {
+            aCron[0] = $scope.cron.hourminute.subValue2.value;
+            aCron[1] = $scope.cron.hourminute.subValue1.value + "/" + $scope.cron.hourminute.value;
+          } else if ($scope.cron.hourminute.type.value === "hour") {
             aCron[0] = "0";
-            aCron[1] = self.cron.hourminute.subValue2.value;
-            aCron[2] = self.cron.hourminute.subValue1.value(+"/" + self.cron.hourminute.value);
+            aCron[1] = $scope.cron.hourminute.subValue2.value;
+            aCron[2] = $scope.cron.hourminute.subValue1.value + "/" + $scope.cron.hourminute.value;
           }
-          return self.cron.custom.value = generateCron();
+          $scope.cron.custom.value = generateCron();
         };
 
         /*
@@ -127,16 +116,16 @@
         			 - Create base configuration
         			 - Parse days of week and generate cron task string
          */
-        generateWeekCron = function() {
+        this.generateWeekCron = function() {
           createBaseCron();
           aCron[0] = "0";
-          aCron[1] = self.cron.week.subValue2.value;
-          aCron[2] = self.cron.week.subValue1.value;
-          aCron[5] = self.cron.week.value.join(",");
+          aCron[1] = $scope.cron.week.subValue2.value;
+          aCron[2] = $scope.cron.week.subValue1.value;
+          aCron[5] = $scope.cron.week.value.join(",");
           if (aCron[5] === "") {
             aCron[5] = "*";
           }
-          return self.cron.custom.value = generateCron();
+          $scope.cron.custom.value = generateCron();
         };
 
         /*
@@ -146,40 +135,40 @@
         updateModels = function() {
           return {
             'hourminute_m': function() {
-              self.scheduleType = self.radioTypes["2"];
-              self.cron.hourminute.type = self.hourminute.types[0];
+              $scope.scheduleType = $scope.radioTypes["2"];
+              $scope.cron.hourminute.type = self.hourminute.types[0];
               $timeout(function() {
                 var subschedule;
-                self.hourminuteRange.value = range.minuteincrement;
-                self.hourminuteRange.subValue1 = range.minute;
-                self.hourminuteRange.subValue2 = range.second;
-                self.cron.hourminute.subValue2 = range.second[parseFloat(schedule[0], 10)];
+                $scope.hourminuteRange.value = self.range.minuteincrement;
+                $scope.hourminuteRange.subValue1 = self.range.minute;
+                $scope.hourminuteRange.subValue2 = self.range.second;
+                $scope.cron.hourminute.subValue2 = self.range.second[parseFloat(schedule[0], 10)];
                 subschedule = schedule[1].split("/");
-                self.cron.hourminute.subValue1 = range.minute[parseFloat(subschedule[0], 10)];
-                self.cron.hourminute.value = parseFloat(subschedule[1], 10);
+                $scope.cron.hourminute.subValue1 = self.range.minute[parseFloat(subschedule[0], 10)];
+                $scope.cron.hourminute.value = parseFloat(subschedule[1], 10);
                 return $scope.$apply();
               });
             },
             'hourminute_h': function() {
-              self.scheduleType = self.radioTypes["2"];
-              self.cron.hourminute.type = hourminute.types[1];
+              $scope.scheduleType = $scope.radioTypes["2"];
+              $scope.cron.hourminute.type = self.hourminute.types[1];
               $timeout(function() {
                 var subschedule;
-                self.hourminuteRange.value = range.hourincrement;
-                self.hourminuteRange.subValue1 = range.hour;
-                self.hourminuteRange.subValue2 = range.minute;
-                self.cron.hourminute.subValue2 = range.minute[parseFloat(schedule[1], 10)];
+                $scope.hourminuteRange.value = self.range.hourincrement;
+                $scope.hourminuteRange.subValue1 = self.range.hour;
+                $scope.hourminuteRange.subValue2 = self.range.minute;
+                $scope.cron.hourminute.subValue2 = self.range.minute[parseFloat(schedule[1], 10)];
                 subschedule = schedule[2].split("/");
-                self.cron.hourminute.subValue1 = range.hour[parseFloat(subschedule[0], 10)];
-                self.cron.hourminute.value = parseFloat(subschedule[1], 10);
+                $scope.cron.hourminute.subValue1 = self.range.hour[parseFloat(subschedule[0], 10)];
+                $scope.cron.hourminute.value = parseFloat(subschedule[1], 10);
                 return $scope.$apply();
               });
             },
             'week': function(schedule) {
-              self.scheduleType = self.radioTypes[3];
-              self.cron.week.subValue2 = range.minute[parseFloat(schedule[1], 10)];
-              self.cron.week.subValue1 = range.hour[parseFloat(schedule[2], 10)];
-              return self.cron.week.value = schedule[5].split(",");
+              $scope.scheduleType = $scope.radioTypes[3];
+              $scope.cron.week.subValue2 = self.range.minute[parseFloat(schedule[1], 10)];
+              $scope.cron.week.subValue1 = self.range.hour[parseFloat(schedule[2], 10)];
+              return $scope.cron.week.value = schedule[5].split(",");
             }
           };
         };
@@ -187,9 +176,9 @@
         /*
         Always update cron custom value and also populate the models
          */
-        setInitialCron = function(initialCron) {
+        this.setInitialCron = function(initialCron) {
           var fn, k, len, regex;
-          self.cron.custom.value = initialCron;
+          $scope.cron.custom.value = initialCron;
           fn = function(regex) {
             if (cronTypeRegex[regex].exec(initialCron)) {
               return updateModels.regex(initialCron.split(" "));
@@ -277,28 +266,41 @@
         });
         scope.$watch('scheduleType', function(newValue, oldValue) {
           var fn, j, len, ref, type;
-          ref = scope.radioTypes;
-          fn = function(type) {
-            return scope.cron[scope.radioTypes[type]].disabled = true;
-          };
-          for (j = 0, len = ref.length; j < len; j++) {
-            type = ref[j];
-            fn(type);
-          }
-          scope.cron[newValue].disabled = false;
-          if (newValue === scope.radioTypes["1"]) {
-            return controller.generateCustomCron();
-          } else if (newValue === scope.radioTypes["2"]) {
-            return controller.generateHourminuteCron();
-          } else if (newValue === scope.radioTypes["3"]) {
-            return controller.generateWeekCron();
+          if (newValue !== oldValue) {
+            ref = scope.radioTypes;
+            fn = function(type) {
+              return scope.cron[scope.radioTypes[type]].disabled = true;
+            };
+            for (j = 0, len = ref.length; j < len; j++) {
+              type = ref[j];
+              fn(type);
+            }
+            scope.cron[newValue].disabled = false;
+            if (newValue === scope.radioTypes["1"]) {
+              return controller.generateCustomCron();
+            } else if (newValue === scope.radioTypes["2"]) {
+              return controller.generateHourminuteCron();
+            } else if (newValue === scope.radioTypes["3"]) {
+              return controller.generateWeekCron();
+            }
           }
         });
-        if ((scope.scheduleEdit != null)()) {
+        if (scope.scheduleEdit()) {
           return scope.scheduleEdit.then(function(schedule) {
             return controller.setInitialCron(schedule);
           })();
         }
+      };
+      sSchedule = {
+        restrict: 'AE',
+        scope: {
+          schedule: '=?',
+          scheduleEdit: '&',
+          initialValue: '@'
+        },
+        controller: sScheduleController,
+        link: sScheduleLink,
+        templateUrl: 'simpleCronSchedule.html'
       };
       return sSchedule;
     }

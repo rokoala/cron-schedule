@@ -1,5 +1,5 @@
-angular.module("simpleCronSchedule",[])
-.directive("simpleCronSchedule",['$compile','$translate',function($compile,$translate){
+angular.module("CronSchedule",[])
+.directive("simpleCronSchedule",['$compile',function($compile){
 	
 	var sSchedule = {
 		restrict: 'AE',
@@ -45,11 +45,11 @@ angular.module("simpleCronSchedule",[])
 			};
 			
 			//translation of days of week
-			this.range.dayofweek.forEach(function(day){
-				$translate(day).then(function(translation){
-					$scope.dayofweekConvert[day] = translation;
-				});
-			});
+//			this.range.dayofweek.forEach(function(day){
+//				$translate(day).then(function(translation){
+//					$scope.dayofweekConvert[day] = translation;
+//				});
+//			});
 			
 			//hourminute types object (value and name)
 			this.hourminute={
@@ -59,11 +59,11 @@ angular.module("simpleCronSchedule",[])
 				]
 			};
 			
-			this.hourminute.types.forEach(function(type){
-				$translate(type.name).then(function(translation){
-					type.name = translation;
-				});
-			});
+//			this.hourminute.types.forEach(function(type){
+//				$translate(type.name).then(function(translation){
+//					type.name = translation;
+//				});
+//			});
 			
 			//calculating hour,minute,second ranges
 			for(var i=0; i<60;i++){
@@ -356,7 +356,7 @@ angular.module("simpleCronSchedule",[])
         		});
         	}
         },
-        templateUrl: 'partials/simpleCronSchedule/simpleCronSchedule.html'
+        templateUrl: 'simpleCronSchedule.html'
 	};
 	
 	return sSchedule;

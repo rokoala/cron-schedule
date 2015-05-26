@@ -4,10 +4,20 @@
         <base href="../"/>
         <script src="bower_components/angularjs/angular.min.js"></script>
         <script src="cron-schedule.js"></script>
-        <link rel="stylesheet" type="text/css" href="bower_components/bootplus/docs/assets/css/bootplus.css"
+        <link rel="stylesheet" type="text/css" href="bower_components/bootplus/docs/assets/css/bootplus.css">
+        <script type="text/javascript">
+            angular.module("cronBootplus",['CronSchedule'])
+            .controller('CronBootplusController',['$scope',function($scope){
+                $scope.cronOptions = {
+                    theme:'bootplus'
+                }
+            }]);
+        </script>
     </head>
-    <body style="background-color:white" ng-app="CronSchedule">
-        <simple-cron-schedule>
-        </simple-cron-schedule>
+    <body style="background-color:white" ng-app="cronBootplus">
+        <div ng-controller="CronBootplusController">
+            <simple-cron-schedule options="cronOptions">
+            </simple-cron-schedule>
+        </div>
     </body>
 </html>

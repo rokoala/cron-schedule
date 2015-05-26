@@ -1,10 +1,30 @@
 angular.module("CronSchedule",[])
 .directive("simpleCronSchedule",['$compile',function($compile){
 	
+    var getTemplate = function(theme) {
+        var template = '';
+
+        switch(theme) {
+            case 'bootplus':
+                template = 'templates/theme/bootplus.html';
+                break;
+            default:
+                template = 'templates/simpleCronSchedule.html'
+        }
+
+        return template;
+    };
+    
+    var defaultOptions = {
+        translate:false,
+        theme:""
+    };
+    
 	var sSchedule = {
 		restrict: 'AE',
 		scope:{
 			schedule:"=?",
+            options:"=?",
 			scheduleEdit:"&",
 			initialValue:"@"
 		},
@@ -12,6 +32,8 @@ angular.module("CronSchedule",[])
 			this.aCron = ['0','0','0','0','0','0'];
 			this.cronDefaultCustomValue = this.aCron.join(" ");
 			
+            this.options = angular.extend({},defaultOptions,$scope.options);
+            
 			this.cronTypeRegex={
 				hourminute_m:/^[0-9]{1,2}\s[0-9]{1,2}\/[0-9]{1,2}\s\*\s\*\s\*\s\*$/,
 				hourminute_h:/^[0]\s[0-9]{1,2}\s[0-9]{1,2}\/[0-9]{1,2}\s\*\s\*\s\*$/,
@@ -44,13 +66,6 @@ angular.module("CronSchedule",[])
 				"SAT":"SAT"
 			};
 			
-			//translation of days of week
-//			this.range.dayofweek.forEach(function(day){
-//				$translate(day).then(function(translation){
-//					$scope.dayofweekConvert[day] = translation;
-//				});
-//			});
-			
 			//hourminute types object (value and name)
 			this.hourminute={
 				types:[
@@ -59,6 +74,13 @@ angular.module("CronSchedule",[])
 				]
 			};
 			
+            //translation of days of week
+//			this.range.dayofweek.forEach(function(day){
+//				$translate(day).then(function(translation){
+//					$scope.dayofweekConvert[day] = translation;
+//				});
+//			});
+            
 //			this.hourminute.types.forEach(function(type){
 //				$translate(type.name).then(function(translation){
 //					type.name = translation;
@@ -355,8 +377,12 @@ angular.module("CronSchedule",[])
             		controller.setInitialCron(schedule);
         		});
         	}
+            
+            scope.getTemplateUrl = function(){
+                return getTemplate(controller.options.theme);
+            };
         },
-        templateUrl: 'templates/theme/bootplus.html'
+        template: "<div ng-include='getTemplateUrl()'></div>"
 	};
 	
 	return sSchedule;

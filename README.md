@@ -4,8 +4,8 @@ CronSchedule is a front-end library that creates an interface that simplify the 
 
 ## Quick start
 
-Three quick start options are available:
+Two quick start options are available:
 
 * Bower install: bower install rokoala/cron-schedule
-* Clone the repo: `git clone git@github.com:rokoala/cron-schedule.git.
+* Clone the repo: `git clone git@github.com:rokoala/cron-schedule.git.`
 

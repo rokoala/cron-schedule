@@ -356,7 +356,7 @@ angular.module("CronSchedule",[])
         		});
         	}
         },
-        templateUrl: 'templates/simpleCronSchedule.html'
+        templateUrl: 'templates/theme/bootplus.html'
 	};
 	
 	return sSchedule;

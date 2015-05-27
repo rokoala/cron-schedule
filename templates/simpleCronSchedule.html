@@ -1,24 +1,26 @@
-<div style="margin-top:10px">
-     <input type="radio" ng-model="scheduleType" value="custom">
-     <span translate>CRON</span> 		 
-     <input type="text" ng-disabled="cron.custom.disabled" ng-model="cron.custom.value"></input>
-</div>
-<div style="margin-top:10px">
-     <input type="radio" ng-model="scheduleType" value="hourminute">
-     <span translate>Every</span>
-     <select ng-model="cron.hourminute.value" ng-disabled="cron.hourminute.disabled" style="width:55px" ng-options="o for o in hourminuteRange.value"></select>
-     <select ng-model="cron.hourminute.type" ng-disabled="cron.hourminute.disabled" style="width:95px" ng-options="o.name for o in hourminuteRange.type"></select>
-     <span translate>starting at</span>
-     <select ng-model="cron.hourminute.subValue1" ng-disabled="cron.hourminute.disabled" style="width:80px" ng-options="o.name for o in hourminuteRange.subValue1"></select>
-     <span>:</span>
-     <select ng-model="cron.hourminute.subValue2" ng-disabled="cron.hourminute.disabled" style="width:80px" ng-options="o.name for o in hourminuteRange.subValue2"></select>
-</div>
-<div style="margin-top:10px">
-    <input type="radio" ng-model="scheduleType" value="week">
-    <span translate>Weekly</span>
-    <select data-placeholder="Choose day of week" chosen-disabled="cron.week.disabled" multiple class="span4 chzn-select" chosen="cron.week.value" ng-model="cron.week.value" ng-options="day as dayofweekConvert[day] for day in weekRange.value"></select>
-    <span translate>at</span>
-    <select ng-model="cron.week.subValue1" ng-disabled="cron.week.disabled" style="width:60px" ng-options="o.name for o in weekRange.subValue1"></select>
-    <span>:</span>
-    <select ng-model="cron.week.subValue2" ng-disabled="cron.week.disabled" style="width:80px" ng-options="o.name for o in weekRange.subValue2"></select>
+<div style="margin-top:25px">
+     <div style="margin-top:10px">
+         <input type="radio" ng-model="scheduleType" value="custom">
+         <span translate>CRON</span>
+         <input type="text" ng-disabled="cron.custom.disabled" ng-model="cron.custom.value" style="margin-left:5px"></input>
+     </div>
+     <div style="margin-top:10px">
+         <input type="radio" ng-model="scheduleType" value="hourminute">
+         <span translate>Every</span>
+         <select ng-model="cron.hourminute.value" ng-disabled="cron.hourminute.disabled" ng-options="o for o in hourminuteRange.value" style="margin-left:5px"></select>
+         <select ng-model="cron.hourminute.type" ng-disabled="cron.hourminute.disabled" ng-options="o.name for o in hourminuteRange.type" style="margin-left:5px"></select>
+         <span translate>starting at</span>
+         <select ng-model="cron.hourminute.subValue1" ng-disabled="cron.hourminute.disabled" ng-options="o.name for o in hourminuteRange.subValue1" style="margin-left:5px"></select>
+         <span style="margin-left:5px">:</span>
+         <select ng-model="cron.hourminute.subValue2" ng-disabled="cron.hourminute.disabled" ng-options="o.name for o in hourminuteRange.subValue2" style="margin-left:5px"></select>
+     </div>
+     <div style="margin-top:10px">
+        <input type="radio" ng-model="scheduleType" value="week">
+        <span translate>Weekly</span>
+        <select multiple ng-model="cron.week.value" ng-options="day as dayofweekConvert[day] for day in weekRange.value" style="margin-left:5px"></select>
+        <span style="margin-left:5px" translate>at</span>
+        <select ng-model="cron.week.subValue1" ng-disabled="cron.week.disabled" ng-options="o.name for o in weekRange.subValue1" style="margin-left:5px"></select>
+        <span style="margin-left:5px">:</span>
+        <select ng-model="cron.week.subValue2" ng-disabled="cron.week.disabled" ng-options="o.name for o in weekRange.subValue2" style="margin-left:5px"></select>
+     </div>
 </div>

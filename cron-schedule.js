@@ -227,11 +227,31 @@ cron.directive("simpleCronSchedule",['$compile','$http',function($compile,$http)
             function setInitialCron(initialCron){
                 $scope.cron.custom.value = initialCron;
                 
+        		var found = null;
         		for(regex in self.cronTypeRegex){
         			if(self.cronTypeRegex[regex].exec(initialCron)){
-                        self.updateModels[regex](initialCron.split(" "));
+        				if(regex === "hourminute_m"){
+        					var minute = initialCron.split(" ")[1].split("/")[1];
+        					self.range.minuteincrement.forEach(function(value){
+        						if(value === parseFloat(minute,10)){
+        							found = regex;
+        						}
+        					});
+        				}else if(regex === "hourminute_h"){
+        					var hour = initialCron.split(" ")[2].split("/")[1];
+        					self.range.hourincrement.forEach(function(value){
+        						if(value === parseFloat(hour,10)){
+        							found = regex;
+        						}
+        					});
+        				}
         			}
         		}
+        		
+        		if(found != null)
+        			self.updateModels[found](initialCron.split(" "));
+        		else
+        			$scope.scheduleType = $scope.radioTypes["1"];
 			};
 			
 		}],

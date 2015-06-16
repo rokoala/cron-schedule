@@ -1,6 +1,6 @@
 # [cron-schedule v1.0.0](https://github.com/rokoala/cron-schedule)
 
-CronSchedule is a front-end library that simplifies the creation of cron task syntax. It has support for Unix (* * * * *) and [Spring Framework Cron Tasks](http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/scheduling/support/CronSequenceGenerator.html) ( * * * * * * ) 
+CronSchedule is a front-end library that simplifies the creation of cron task syntax. It has support for [Unix](https://en.wikipedia.org/wiki/Cron) (* * * * *) and [Spring Framework Cron Tasks](http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/scheduling/support/CronSequenceGenerator.html) ( * * * * * * ) 
 
 ## Quick start
 

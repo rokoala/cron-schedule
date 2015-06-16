@@ -1,6 +1,7 @@
-/**!
- * AngularJS file simpleCronSchedule and CronSchedule directive
+/**
+ * AngularJS simpleCronSchedule and CronSchedule directive
  * @author  RodrigoKoga  <koga.rodrigo@gmail.com>
+ * @description Creates inputs that generates spring cron task schedule
  * @version 1.0.0
  */
 (function(window,angular){
@@ -9,11 +10,57 @@
 
 var cron = angular.module("CronSchedule",[]);
 
+var extendDeep = function extendDeep(dst) {
+  angular.forEach(arguments, function(obj) {
+    if (obj !== dst) {
+      angular.forEach(obj, function(value, key) {
+        if (dst[key] && dst[key].constructor && dst[key].constructor === Object) {
+          extendDeep(dst[key], value);
+        } else {
+          dst[key] = value;
+        }     
+      });   
+    }
+  });
+  return dst;
+};
+
 cron.directive("simpleCronSchedule",['$compile','$http',function($compile,$http) {
 	
     var defaultOptions = {
-        translate:false
+        translate:false,
+        type:"spring",
+        range:{
+            hour:[],
+            hourincrement:[1,2,3,4,6,8,12,24],
+            minute:[],
+            minuteincrement:[1,2,3,4,5,6,10,12,15,20,30],
+            second:[],
+            dayofweek:["SUN","MON","TUE","WED","THU","FRI","SAT"],
+            dayofweekConvert:{
+				"SUN":"SUN",
+				"MON":"MON",
+				"TUE":"TUE",
+				"WED":"WED",
+				"THU":"THU",
+				"FRI":"FRI",
+				"SAT":"SAT"
+			}
+        }
     };
+    
+    var rangeHour   = defaultOptions.range.hour;
+    var rangeMinute = defaultOptions.range.minute;
+    var rangeSecond = defaultOptions.range.second;
+    
+    //calculating hour,minute,second ranges
+    for(var i=0; i<60; i++){
+        if(i<24)
+            rangeHour.push({value:i,name:i+"h"});
+
+        rangeMinute.push({value:i,name:i+" min"});
+        rangeSecond.push({value:i,name:i+" s"});
+    }
     
 	var sSchedule = {
 		restrict: 'AE',
@@ -27,26 +74,25 @@ cron.directive("simpleCronSchedule",['$compile','$http',function($compile,$http)
             
             var self = this;
             
-            this.options = angular.extend({},defaultOptions,$scope.options);
+            this.options = extendDeep({},defaultOptions,$scope.options);
+            this.range = this.options.range;
+
+            this.isUnix = (this.options.type === "unix") ? true : false;
             
-			this.aCron = ['0','0','0','0','0','0'];
-			this.cronDefaultCustomValue = this.aCron.join(" ");
+            if(this.isUnix){
+                this.aCron = ['0','0','0','0','0'];
+            }else{
+                this.aCron = ['0','0','0','0','0','0'];
+            }
+            
+            this.cronDefaultCustomValue = this.aCron.join(" ");
             
 			this.cronTypeRegex={
 				hourminute_m:/^[0-9]{1,2}\s[0-9]{1,2}\/[0-9]{1,2}\s\*\s\*\s\*\s\*$/,
 				hourminute_h:/^[0]\s[0-9]{1,2}\s[0-9]{1,2}\/[0-9]{1,2}\s\*\s\*\s\*$/,
 				week:/0\s(\d{1,2})\s(\d{1,2})\s\*\s\*\s(.*)/
 			};
-			
-			this.range={
-				hour:[],
-				hourincrement:[1,2,3,4,6,8,12,24],
-				minute:[],
-				minuteincrement:[1,2,3,4,5,6,10,12,15,20,30],
-				second:[],
-				dayofweek:["SUN","MON","TUE","WED","THU","FRI","SAT"]
-			};
-
+            
 			this.hourminute={
 				types:[
 			       {name:"minute(s)",value:"minute"},
@@ -60,41 +106,7 @@ cron.directive("simpleCronSchedule",['$compile','$http',function($compile,$http)
 				3:"week"
 			};
             
-			$scope.dayofweekConvert={
-				"SUN":"SUN",
-				"MON":"MON",
-				"TUE":"TUE",
-				"WED":"WED",
-				"THU":"THU",
-				"FRI":"FRI",
-				"SAT":"SAT"
-			};
-            
-            /*
-            //translation of days of week
-			this.range.dayofweek.forEach(function(day){
-				$translate(day).then(function(translation){
-					$scope.dayofweekConvert[day] = translation;
-				});
-			});
-            
-			this.hourminute.types.forEach(function(type){
-				$translate(type.name).then(function(translation){
-					type.name = translation;
-				});
-			});
-            */
-			
-			//calculating hour,minute,second ranges
-			for(var i=0; i<60;i++){
-				if(i<24)
-					this.range.hour.push({value:i,name:i+"h"});
-				
-				this.range.minute.push({value:i,name:i+" min"});
-				this.range.second.push({value:i,name:i+" s"});
-			}
-            
-			
+            $scope.dayofweekConvert = this.range.dayofweekConvert;
             
 			this.createBaseCron          = createBaseCron;
 			this.generateCron            = generateCron;
@@ -157,7 +169,7 @@ cron.directive("simpleCronSchedule",['$compile','$http',function($compile,$http)
 			 * Creates base cron configuration -> * * * * * *
 			 */
             function createBaseCron(){
-                for(var i=0; i<6; i++){
+                for(var i=0; i<self.aCron.length; i++){
 					self.aCron[i] = '*';
 				}
             };
@@ -203,6 +215,19 @@ cron.directive("simpleCronSchedule",['$compile','$http',function($compile,$http)
 				$scope.cron.custom.value = this.generateCron();
 			}
             
+            function unix_generateHourMinuteCron(){
+				this.createBaseCron();
+				
+				if($scope.cron.hourminute.type.value === "minute"){
+					self.aCron[0] = $scope.cron.hourminute.subValue1.value + "/" + $scope.cron.hourminute.value;
+				}else if($scope.cron.hourminute.type.value === "hour"){
+					self.aCron[0] = $scope.cron.hourminute.subValue2.value;
+					self.aCron[1] = $scope.cron.hourminute.subValue1.value + "/" + $scope.cron.hourminute.value;
+				}
+                
+				$scope.cron.custom.value = this.generateCron();
+			}
+            
 			/*
 			 * Generate week cron type
 			 *  Create base configuration
@@ -217,6 +242,18 @@ cron.directive("simpleCronSchedule",['$compile','$http',function($compile,$http)
 				self.aCron[5] = $scope.cron.week.value.join(",");
 				
 				if(self.aCron[5] === "") self.aCron[5] = "*";
+				
+				$scope.cron.custom.value = this.generateCron();
+			};
+            
+            function unix_generateWeekCron(){
+				this.createBaseCron();
+
+				self.aCron[0] = $scope.cron.week.subValue2.value;
+				self.aCron[1] = $scope.cron.week.subValue1.value;
+				self.aCron[4] = $scope.cron.week.value.join(",");
+				
+				if(self.aCron[4] === "") self.aCron[4] = "*";
 				
 				$scope.cron.custom.value = this.generateCron();
 			};
@@ -265,15 +302,15 @@ cron.directive("simpleCronSchedule",['$compile','$http',function($compile,$http)
 
         	// hourminute range configuration
         	scope.hourminuteRange={
-        		value:controller.range.minuteincrement,
-        		type:controller.hourminute.types,
+        		value:    controller.range.minuteincrement,
+        		type:     controller.hourminute.types,
         		subValue1:controller.range.minute,
         		subValue2:controller.range.second
         	};
         	
         	// day of week range configuration
         	scope.weekRange={
-        		value:controller.range.dayofweek,
+        		value:    controller.range.dayofweek,
         		subValue1:controller.range.hour,
         		subValue2:controller.range.minute
         	};
@@ -299,7 +336,7 @@ cron.directive("simpleCronSchedule",['$compile','$http',function($compile,$http)
         		}
         	};
         	
-        	if(typeof scope.initialValue !== "undefined")
+        	if(angular.isDefined(scope.initialValue))
         		controller.setInitialCron(scope.initialValue);
         	
             /*
@@ -307,7 +344,7 @@ cron.directive("simpleCronSchedule",['$compile','$http',function($compile,$http)
         	 * scheduleEdit is a promise function that will have schedule string as callback parameter
         	 * and will populate the cron schedule directive asynchronous.
         	 */
-        	if(typeof scope.scheduleEdit() !== "undefined"){
+        	if(angular.isDefined(scope.scheduleEdit())){
         		scope.scheduleEdit().then(function(schedule){
             		controller.setInitialCron(schedule);
         		});
@@ -386,7 +423,11 @@ cron.directive("simpleCronSchedule",['$compile','$http',function($compile,$http)
     				controller.generateWeekCron();
         	});
             
-            var template = '<div style="margin-top:25px"><div style="margin-top:10px"><input type="radio" ng-model="scheduleType" value="custom"><span translate>CRON</span><input type="text" ng-disabled="cron.custom.disabled" ng-model="cron.custom.value" style="margin-left:5px"></input></div><div style="margin-top:10px"><input type="radio" ng-model="scheduleType" value="hourminute"><span translate>Every</span><select ng-model="cron.hourminute.value" ng-disabled="cron.hourminute.disabled" ng-options="o for o in hourminuteRange.value" style="margin-left:5px"></select><select ng-model="cron.hourminute.type" ng-disabled="cron.hourminute.disabled" ng-options="o.name for o in hourminuteRange.type" style="margin-left:5px"></select><span translate>starting at</span><select ng-model="cron.hourminute.subValue1" ng-disabled="cron.hourminute.disabled" ng-options="o.name for o in hourminuteRange.subValue1" style="margin-left:5px"></select><span style="margin-left:5px">:</span><select ng-model="cron.hourminute.subValue2" ng-disabled="cron.hourminute.disabled" ng-options="o.name for o in hourminuteRange.subValue2" style="margin-left:5px"></select></div><div style="margin-top:10px"><input type="radio" ng-model="scheduleType" value="week"><span translate>Weekly</span><select multiple ng-model="cron.week.value" ng-options="day as dayofweekConvert[day] for day in weekRange.value" style="margin-left:5px"></select><span style="margin-left:5px" translate>at</span><select ng-model="cron.week.subValue1" ng-disabled="cron.week.disabled" ng-options="o.name for o in weekRange.subValue1" style="margin-left:5px"></select><span style="margin-left:5px">:</span><select ng-model="cron.week.subValue2" ng-disabled="cron.week.disabled" ng-options="o.name for o in weekRange.subValue2" style="margin-left:5px"></select></div></div>'
+            var spring_template = '<div style="margin-top:25px"><div style="margin-top:10px"><input type="radio" ng-model="scheduleType" value="custom"><span translate>CRON</span><input type="text" ng-disabled="cron.custom.disabled" ng-model="cron.custom.value" style="margin-left:5px"></input></div><div style="margin-top:10px"><input type="radio" ng-model="scheduleType" value="hourminute"><span translate>Every</span><select ng-model="cron.hourminute.value" ng-disabled="cron.hourminute.disabled" ng-options="o for o in hourminuteRange.value" style="margin-left:5px"></select><select ng-model="cron.hourminute.type" ng-disabled="cron.hourminute.disabled" ng-options="o.name for o in hourminuteRange.type" style="margin-left:5px"></select><span translate>starting at</span><select ng-model="cron.hourminute.subValue1" ng-disabled="cron.hourminute.disabled" ng-options="o.name for o in hourminuteRange.subValue1" style="margin-left:5px"></select><span style="margin-left:5px">:</span><select ng-model="cron.hourminute.subValue2" ng-disabled="cron.hourminute.disabled" ng-options="o.name for o in hourminuteRange.subValue2" style="margin-left:5px"></select></div><div style="margin-top:10px"><input type="radio" ng-model="scheduleType" value="week"><span translate>Weekly</span><select multiple ng-model="cron.week.value" ng-options="day as dayofweekConvert[day] for day in weekRange.value" style="margin-left:5px"></select><span style="margin-left:5px" translate>at</span><select ng-model="cron.week.subValue1" ng-disabled="cron.week.disabled" ng-options="o.name for o in weekRange.subValue1" style="margin-left:5px"></select><span style="margin-left:5px">:</span><select ng-model="cron.week.subValue2" ng-disabled="cron.week.disabled" ng-options="o.name for o in weekRange.subValue2" style="margin-left:5px"></select></div></div>'
+            
+            var unix_template = '<div style="margin-top:25px"><div style="margin-top:10px"><input type="radio" ng-model="scheduleType" value="custom"><span translate>CRON</span><input type="text" ng-disabled="cron.custom.disabled" ng-model="cron.custom.value" style="margin-left:5px"></input></div><div style="margin-top:10px"><input type="radio" ng-model="scheduleType" value="hourminute"><span translate>Every</span><select ng-model="cron.hourminute.value" ng-disabled="cron.hourminute.disabled" ng-options="o for o in hourminuteRange.value" style="margin-left:5px"></select><select ng-model="cron.hourminute.type" ng-disabled="cron.hourminute.disabled" ng-options="o.name for o in hourminuteRange.type" style="margin-left:5px"></select><span translate>starting at</span><select ng-model="cron.hourminute.subValue1" ng-disabled="cron.hourminute.disabled" ng-options="o.name for o in hourminuteRange.subValue1" style="margin-left:5px"></select><span ng-if="cron.hourminute.type.value !== \'minute\'"><span style="margin-left:5px">:</span><select ng-model="cron.hourminute.subValue2" ng-disabled="cron.hourminute.disabled" ng-options="o.name for o in hourminuteRange.subValue2" style="margin-left:5px"></select></span></div><div style="margin-top:10px"><input type="radio" ng-model="scheduleType" value="week"><span translate>Weekly</span><select multiple ng-model="cron.week.value" ng-options="day as dayofweekConvert[day] for day in weekRange.value" style="margin-left:5px"></select><span style="margin-left:5px" translate>at</span><select ng-model="cron.week.subValue1" ng-disabled="cron.week.disabled" ng-options="o.name for o in weekRange.subValue1" style="margin-left:5px"></select><span style="margin-left:5px">:</span><select ng-model="cron.week.subValue2" ng-disabled="cron.week.disabled" ng-options="o.name for o in weekRange.subValue2" style="margin-left:5px"></select></div></div>'
+            
+            var template = (controller.isUnix) ? unix_template : spring_template
             
             element.append($compile(template)(scope));
         }

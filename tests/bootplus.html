@@ -8,7 +8,10 @@
         <script type="text/javascript">
             angular.module("cronBootplus",['CronSchedule'])
                 .controller('CronBootplusController',['$scope',function($scope){
-                    $scope.cronOptions = {};
+                    $scope.unixCronOptions = {
+                        type:"unix"
+                    };
+                    
                 }]);
         </script>
         
@@ -16,7 +19,10 @@
     </head>
     <body style="background-color:white" ng-app="cronBootplus">
         <div ng-controller="CronBootplusController">
-            <simple-cron-schedule options="cronOptions"></simple-cron-schedule>
+            <h3>Simple cron schedule</h3>
+            <simple-cron-schedule></simple-cron-schedule>
+            <h3>Unix cron schedule</h3>
+            <simple-cron-schedule options="unixCronOptions"></simple-cron-schedule>
         </div>
     </body>
 </html>
